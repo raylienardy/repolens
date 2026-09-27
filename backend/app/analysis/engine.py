@@ -5,6 +5,10 @@ from app.analysis.analyzers.structure import analyze_structure
 from app.analysis.analyzers.documentation import analyze_documentation
 from app.analysis.analyzers.dependencies import analyze_dependencies
 from app.analysis.analyzers.frameworks import analyze_frameworks
+from app.analysis.analyzers.testing import analyze_testing
+from app.analysis.analyzers.configuration import analyze_configuration
+from app.analysis.analyzers.security_signals import analyze_security_signals
+from app.analysis.analyzers.entry_points import analyze_entry_points
 from app.analysis.inputs import AnalysisInput
 
 ANALYZER_VERSION = "0.1.0"
@@ -35,4 +39,8 @@ def run_analysis(input: AnalysisInput) -> AnalysisResult:
         documentation=analyze_documentation(input),
         dependencies=deps,
         frameworks=fwks,
+        testing=analyze_testing(input),
+        configuration=analyze_configuration(input),
+        security_signals=analyze_security_signals(input),
+        entry_points=analyze_entry_points(input),
     )

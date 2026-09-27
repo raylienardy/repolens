@@ -18,21 +18,26 @@ def print_result(label: str, res) -> None:
         "documentation": {k: data["documentation"][k] for k in ("has_readme", "has_license")},
         "dependencies": {k: data["dependencies"][k] for k in ("has_manifest", "ecosystems", "total_count", "runtime_dependencies")},
         "frameworks": data["frameworks"],
+        "testing": data["testing"],
+        "configuration": data["configuration"],
+        "security_signals": data["security_signals"],
+        "entry_points": data["entry_points"],
     }, indent=2))
 
 
+def base_meta(name="repo", language=None):
+    return {
+        "full_name": f"test/{name}", "owner": "test", "name": name,
+        "description": "desc", "default_branch": "main", "stars": 0,
+        "forks": 0, "license": None, "html_url": "url", "language": language,
+    }
+
+
 def test_empty():
-    data = AnalysisInput.from_dicts({"language": None}, [])
-    return run_analysis(data)
+    return run_analysis(AnalysisInput.from_dicts(base_meta(language=None), []))
 
 
 def test_mock_small():
-    meta = {
-        "full_name": "test/repo", "owner": "test", "name": "repo",
-        "description": "desc", "default_branch": "main",
-        "stars": 1, "forks": 0, "license": "MIT", "html_url": "url",
-        "language": "Python"
-    }
     tree = [
         {"path": "README.md", "type": "blob", "size": 100},
         {"path": "pyproject.toml", "type": "blob", "size": 50},
@@ -40,15 +45,10 @@ def test_mock_small():
         {"path": "docs", "type": "tree"},
         {"path": "docs/index.md", "type": "blob", "size": 50},
     ]
-    return run_analysis(AnalysisInput.from_dicts(meta, tree))
+    return run_analysis(AnalysisInput.from_dicts(base_meta(language="Python"), tree))
 
 
 def test_python_with_pyproject():
-    meta = {
-        "full_name": "me/api", "owner": "me", "name": "api",
-        "default_branch": "main", "stars": 0, "forks": 0,
-        "license": "MIT", "html_url": "url", "language": "Python"
-    }
     tree = [
         {"path": "pyproject.toml", "type": "blob", "size": 300},
         {"path": "app/main.py", "type": "blob", "size": 200},
@@ -58,48 +58,76 @@ def test_python_with_pyproject():
 [project]
 name = "api"
 version = "0.1.0"
-dependencies = [
-    "fastapi>=0.100",
-    "uvicorn[standard]>=0.22",
-    "sqlalchemy>=2.0",
-]
-
+dependencies = ["fastapi>=0.100", "uvicorn[standard]>=0.22", "sqlalchemy>=2.0"]
 [project.optional-dependencies]
 dev = ["pytest>=7.0"]
 """
-    file_contents = {"pyproject.toml": pyproject_content}
-    return run_analysis(AnalysisInput.from_dicts(meta, tree, file_contents))
+    return run_analysis(AnalysisInput.from_dicts(base_meta("api", "Python"), tree, {"pyproject.toml": pyproject_content}))
 
 
 def test_nodejs_with_package_json():
-    meta = {
-        "full_name": "me/web", "owner": "me", "name": "web",
-        "default_branch": "main", "stars": 0, "forks": 0,
-        "license": None, "html_url": "url", "language": "TypeScript"
-    }
     tree = [
         {"path": "package.json", "type": "blob", "size": 400},
         {"path": "src/app/page.tsx", "type": "blob", "size": 200},
     ]
     pkg_content = json.dumps({
-        "name": "web",
-        "dependencies": {"next": "^14.0.0", "react": "^18.0.0", "react-dom": "^18.0.0"},
-        "devDependencies": {"vitest": "^1.0.0", "typescript": "^5.0.0"}
+        "name": "web", "dependencies": {"next": "^14.0.0", "react": "^18.0.0"},
+        "devDependencies": {"vitest": "^1.0.0"}
     })
-    return run_analysis(AnalysisInput.from_dicts(meta, tree, {"package.json": pkg_content}))
+    return run_analysis(AnalysisInput.from_dicts(base_meta("web", "TypeScript"), tree, {"package.json": pkg_content}))
 
 
 def test_requirements_edge():
-    meta = {"full_name": "me/x", "owner": "me", "name": "x", "default_branch": "main",
-            "stars": 0, "forks": 0, "license": None, "html_url": "url", "language": "Python"}
     tree = [{"path": "requirements.txt", "type": "blob", "size": 80}]
     req_content = "# comment\nfastapi>=0.100\n\nuvicorn[standard]==0.30.0\nsqlalchemy\n"
-    return run_analysis(AnalysisInput.from_dicts(meta, tree, {"requirements.txt": req_content}))
+    return run_analysis(AnalysisInput.from_dicts(base_meta("requirements", "Python"), tree, {"requirements.txt": req_content}))
+
+
+def test_testing_signals():
+    tree = [
+        {"path": "tests", "type": "tree"},
+        {"path": "tests/test_a.py", "type": "blob", "size": 10},
+        {"path": "tests/test_b.py", "type": "blob", "size": 10},
+        {"path": "conftest.py", "type": "blob", "size": 10},
+        {"path": "pytest.ini", "type": "blob", "size": 10},
+        {"path": ".github/workflows/test.yml", "type": "blob", "size": 10},
+    ]
+    return run_analysis(AnalysisInput.from_dicts(base_meta("testing", "Python"), tree))
+
+
+def test_configuration_security():
+    tree = [
+        {"path": "Dockerfile", "type": "blob", "size": 10},
+        {"path": "docker-compose.yml", "type": "blob", "size": 10},
+        {"path": "Makefile", "type": "blob", "size": 10},
+        {"path": ".env.example", "type": "blob", "size": 10},
+        {"path": "SECURITY.md", "type": "blob", "size": 10},
+        {"path": ".gitignore", "type": "blob", "size": 10},
+        {"path": "LICENSE", "type": "blob", "size": 10},
+        {"path": ".github/dependabot.yml", "type": "blob", "size": 10},
+    ]
+    return run_analysis(AnalysisInput.from_dicts(base_meta("signals"), tree))
+
+
+def test_entry_points():
+    tree = [
+        {"path": "backend/main.py", "type": "blob", "size": 10},
+        {"path": "frontend/index.ts", "type": "blob", "size": 10},
+        {"path": "cli/main.go", "type": "blob", "size": 10},
+    ]
+    return run_analysis(AnalysisInput.from_dicts(base_meta("entries"), tree))
 
 
 if __name__ == "__main__":
-    print_result("Test 1: Empty Repo", test_empty())
-    print_result("Test 2: Mock Small Repo", test_mock_small())
-    print_result("Test 3: Python + pyproject.toml (FastAPI + pytest + SQLAlchemy)", test_python_with_pyproject())
-    print_result("Test 4: Node.js + package.json (Next.js + React + Vitest)", test_nodejs_with_package_json())
-    print_result("Test 5: requirements.txt edge (comments, blank lines, mixed format)", test_requirements_edge())
+    tests = [
+        ("Test 1: Empty Repo", test_empty),
+        ("Test 2: Mock Small Repo", test_mock_small),
+        ("Test 3: Python + pyproject.toml", test_python_with_pyproject),
+        ("Test 4: Node.js + package.json", test_nodejs_with_package_json),
+        ("Test 5: requirements.txt edge", test_requirements_edge),
+        ("Test 6: Testing Signals", test_testing_signals),
+        ("Test 7: Configuration + Security Signals", test_configuration_security),
+        ("Test 8: Entry Points", test_entry_points),
+    ]
+    for label, test in tests:
+        print_result(label, test())

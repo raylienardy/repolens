@@ -12,6 +12,10 @@ class Settings(BaseSettings):
     CORS_ORIGINS: List[str] = ["http://localhost:3000"]
     LOG_LEVEL: str = "INFO"
     GITHUB_TOKEN: str | None = None
+    AI_PROVIDER: str = "mock"
+    AI_MODEL: str | None = None
+    AI_API_KEY: str | None = None
+    AI_BASE_URL: str | None = None
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

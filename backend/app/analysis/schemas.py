@@ -57,6 +57,41 @@ class DependenciesInfo(BaseModel):
 class FrameworksInfo(BaseModel):
     detected: list[DetectedFramework]
 
+class TestingInfo(BaseModel):
+    has_tests_folder: bool
+    tests_folder_path: str | None
+    test_files_count: int
+    test_files: list[str]
+    has_test_config: bool
+    test_config_files: list[str]
+    has_ci_test_workflow: bool
+
+class ConfigurationInfo(BaseModel):
+    config_files: list[str]
+    has_docker: bool
+    has_docker_compose: bool
+    has_ci: bool
+    has_env_example: bool
+    has_makefile: bool
+
+class SecuritySignalsInfo(BaseModel):
+    # SIGNALS, bukan verdict. Hanya melaporkan keberadaan file indikatif.
+    has_security_md: bool
+    has_dependabot: bool
+    has_env_example: bool
+    has_gitignore: bool
+    has_license: bool
+    signals_found: int
+    signals_total: int = 5
+
+class EntryPoint(BaseModel):
+    path: str
+    kind: str
+    evidence: str
+
+class EntryPointInfo(BaseModel):
+    found: list[EntryPoint]
+
 class AnalysisResult(BaseModel):
     analyzer_version: str
     analyzed_at: datetime
@@ -66,3 +101,7 @@ class AnalysisResult(BaseModel):
     documentation: DocumentationInfo
     dependencies: DependenciesInfo
     frameworks: FrameworksInfo
+    testing: TestingInfo
+    configuration: ConfigurationInfo
+    security_signals: SecuritySignalsInfo
+    entry_points: EntryPointInfo
