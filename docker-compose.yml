@@ -7,11 +7,11 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
-      - repolens_net
+      - repolens_network
 
   backend:
     build:
@@ -29,7 +29,7 @@ services:
     depends_on:
       - db
     networks:
-      - repolens_net
+      - repolens_network
 
   frontend:
     build:
@@ -47,11 +47,11 @@ services:
     depends_on:
       - backend
     networks:
-      - repolens_net
+      - repolens_network
 
 volumes:
   postgres_data:
 
 networks:
-repolens_net:
+  repolens_network:
     driver: bridge

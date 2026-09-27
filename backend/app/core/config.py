@@ -8,9 +8,10 @@ class Settings(BaseSettings):
     APP_VERSION: str = "0.1.0"
     DEBUG: bool = True
     SECRET_KEY: str = "secret_key"
-    DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/repolens"
+    DATABASE_URL: str = "postgresql+asyncpg://repolens:repolens@localhost:5433/repolens"
     CORS_ORIGINS: List[str] = ["http://localhost:3000"]
     LOG_LEVEL: str = "INFO"
+    GITHUB_TOKEN: str | None = None
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
