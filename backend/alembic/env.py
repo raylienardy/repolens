@@ -9,7 +9,7 @@ from alembic import context
 from app.core.config import settings
 from app.db.base import Base
 # Import all models here to register them with Base
-from app.models.repository_analysis import RepositoryAnalysis
+from app.db.models import RepositoryAnalysis
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

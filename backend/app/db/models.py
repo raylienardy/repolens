@@ -1,12 +1,13 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import DateTime, Index, Integer, JSON, String
+from sqlalchemy import DateTime, Integer, String, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.types import JSON
 
 from app.db.base import Base
 
-# JSONB on PostgreSQL, plain JSON elsewhere so SQLite (tests) also works.
+# JSONB on PostgreSQL, plain JSON elsewhere (SQLite in tests).
 JSONVariant = JSON().with_variant(JSONB, "postgresql")
 
 
@@ -22,10 +23,16 @@ class RepositoryAnalysis(Base):
     ai_summary: Mapped[dict | None] = mapped_column(JSONVariant, nullable=True)
     ai_status: Mapped[str] = mapped_column(String(32), nullable=False, default="unavailable")
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc)
+        DateTime(timezone=True), nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
     )
     expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     __table_args__ = (
-        Index("ix_repository_analysis_lookup", "repo_full_name", "commit_sha"),
+        UniqueConstraint("repo_full_name", "commit_sha", name="uq_repo_commit"),
     )
