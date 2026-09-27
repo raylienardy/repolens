@@ -40,6 +40,23 @@ class DocumentationInfo(BaseModel):
     has_docs_folder: bool
     docs_files_count: int
 
+class DetectedFramework(BaseModel):
+    name: str
+    category: str
+    evidence: str
+    confidence: str
+
+class DependenciesInfo(BaseModel):
+    has_manifest: bool
+    manifest_files: list[str]
+    ecosystems: list[str]
+    runtime_dependencies: dict[str, str]
+    dev_dependencies: dict[str, str]
+    total_count: int
+
+class FrameworksInfo(BaseModel):
+    detected: list[DetectedFramework]
+
 class AnalysisResult(BaseModel):
     analyzer_version: str
     analyzed_at: datetime
@@ -47,3 +64,5 @@ class AnalysisResult(BaseModel):
     languages: LanguagesInfo
     structure: StructureInfo
     documentation: DocumentationInfo
+    dependencies: DependenciesInfo
+    frameworks: FrameworksInfo
