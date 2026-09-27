@@ -27,7 +27,9 @@ class GitHubClient:
         }
         if token:
             headers["Authorization"] = f"Bearer {token}"
-        self.client = httpx.AsyncClient(base_url=GITHUB_API_BASE, headers=headers, timeout=timeout)
+        self.client = httpx.AsyncClient(
+            base_url=GITHUB_API_BASE, headers=headers, timeout=timeout, follow_redirects=True
+        )
 
     async def _handle_response(self, resp: httpx.Response) -> Mapping:
         if resp.status_code == 404:
