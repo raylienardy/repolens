@@ -8,7 +8,7 @@ sys.path.insert(0, ".")
 
 from app.ai import AIProvider, build_explanation_prompt, get_provider
 from app.ai.providers.mock import MockProvider
-from app.ai.providers.ninerouter import NineRouterProvider
+from app.ai.providers.openai_compatible import OpenAICompatibleProvider
 from app.analysis.engine import run_analysis
 from app.analysis.inputs import AnalysisInput
 
@@ -98,12 +98,12 @@ async def run_mock_smoke(analysis, prompt: str) -> None:
 
 
 async def run_transport_scenarios(analysis, prompt: str) -> None:
-    assert isinstance(NineRouterProvider(api_key=FAKE_KEY), AIProvider)
+    assert isinstance(OpenAICompatibleProvider(base_url="http://test", model="test-model", api_key=FAKE_KEY), AIProvider)
 
     print("\n" + "=" * 60)
     print("SKENARIO A: MockTransport -> respons valid")
     print("=" * 60)
-    provider = NineRouterProvider(api_key=FAKE_KEY, transport=_ok_transport())
+    provider = OpenAICompatibleProvider(base_url="http://test", model="test-model", api_key=FAKE_KEY, transport=_ok_transport())
     result = await provider.generate_explanation(analysis, prompt)
     await provider.close()
     assert result.status == "ok", result.model_dump_json()
@@ -119,8 +119,7 @@ async def run_transport_scenarios(analysis, prompt: str) -> None:
     async def fail_500(request: httpx.Request) -> httpx.Response:
         return httpx.Response(500, text="upstream exploded (no secret here)")
 
-    provider = NineRouterProvider(
-        api_key=FAKE_KEY, transport=httpx.MockTransport(fail_500)
+    provider = OpenAICompatibleProvider(base_url="http://test", model="test-model", api_key=FAKE_KEY, transport=httpx.MockTransport(fail_500)
     )
     result = await provider.generate_explanation(analysis, prompt)
     await provider.close()
@@ -135,8 +134,7 @@ async def run_transport_scenarios(analysis, prompt: str) -> None:
     async def not_json(request: httpx.Request) -> httpx.Response:
         return httpx.Response(200, text="ini bukan json")
 
-    provider = NineRouterProvider(
-        api_key=FAKE_KEY, transport=httpx.MockTransport(not_json)
+    provider = OpenAICompatibleProvider(base_url="http://test", model="test-model", api_key=FAKE_KEY, transport=httpx.MockTransport(not_json)
     )
     result = await provider.generate_explanation(analysis, prompt)
     await provider.close()
@@ -154,8 +152,7 @@ async def run_transport_scenarios(analysis, prompt: str) -> None:
             json={"choices": [{"message": {"content": '{"summary": "hanya satu field"}'}}]},
         )
 
-    provider = NineRouterProvider(
-        api_key=FAKE_KEY, transport=httpx.MockTransport(bad_schema)
+    provider = OpenAICompatibleProvider(base_url="http://test", model="test-model", api_key=FAKE_KEY, transport=httpx.MockTransport(bad_schema)
     )
     result = await provider.generate_explanation(analysis, prompt)
     await provider.close()
@@ -173,7 +170,11 @@ async def run_factory_validation() -> None:
         assert isinstance(get_provider(), MockProvider)
         print("\nVERIFIED: factory returns MockProvider for 'mock'")
 
-        config_module.settings.AI_PROVIDER = "9router"
+        config_module.settings.AI_PROVIDER = "openai_compatible"
+
+        config_module.settings.AI_BASE_URL = "http://test"
+
+        config_module.settings.AI_MODEL = "test-model"
         config_module.settings.AI_API_KEY = None
         try:
             get_provider()
@@ -182,8 +183,8 @@ async def run_factory_validation() -> None:
             print("VERIFIED: factory rejects 9router without AI_API_KEY ->", exc)
 
         config_module.settings.AI_API_KEY = "dummy-for-validation"
-        assert isinstance(get_provider(), NineRouterProvider)
-        print("VERIFIED: factory returns NineRouterProvider when AI_API_KEY set")
+        assert isinstance(get_provider(), OpenAICompatibleProvider)
+        print("VERIFIED: factory returns OpenAICompatibleProvider when AI_API_KEY set")
 
         config_module.settings.AI_PROVIDER = "unknown-xyz"
         try:

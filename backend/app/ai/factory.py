@@ -1,15 +1,15 @@
 from app.ai.provider import AIProvider
 from app.ai.providers.mock import MockProvider
-from app.ai.providers.ninerouter import NineRouterProvider
+from app.ai.providers.openai_compatible import OpenAICompatibleProvider
 from app.core.config import settings
 
 _REGISTRY: dict[str, type] = {
     "mock": MockProvider,
-    "9router": NineRouterProvider,
+    "openai_compatible": OpenAICompatibleProvider,
 }
 
 _REQUIRED_SETTINGS: dict[str, tuple[str, ...]] = {
-    "9router": ("AI_API_KEY",),
+    "openai_compatible": ("AI_API_KEY", "AI_BASE_URL", "AI_MODEL"),
 }
 
 
@@ -26,15 +26,13 @@ def get_provider() -> AIProvider:
     missing = [name for name in required if not getattr(settings, name, None)]
     if missing:
         raise ValueError(
-            f"Provider '{provider_name}' is missing required setting(s): "
-            f"{', '.join(missing)}. Set them in backend/.env before using this provider."
+            f"Provider '{provider_name}' is missing required setting(s): {', '.join(missing)}."
         )
-
-    if provider_name == "9router":
-        return NineRouterProvider(
+    if provider_name == "openai_compatible":
+        return OpenAICompatibleProvider(
             api_key=settings.AI_API_KEY,
             base_url=settings.AI_BASE_URL,
             model=settings.AI_MODEL,
         )
-
     return provider_cls()
+

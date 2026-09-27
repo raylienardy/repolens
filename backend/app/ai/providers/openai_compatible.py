@@ -8,20 +8,19 @@ from app.analysis.schemas import AnalysisResult
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_BASE_URL = "https://9router.com/v1"
-DEFAULT_MODEL = "gemini-2.5-flash"
+# Removed DEFAULT_BASE_URL and DEFAULT_MODEL - must be supplied by caller
 DEFAULT_TIMEOUT_SECONDS = 60
 MAX_ERROR_BODY_CHARS = 300
 
 
-class NineRouterProvider:
-    """OpenAI-compatible chat completions client for 9Router.
+class OpenAICompatibleProvider:
+    """OpenAI-compatible chat completions client for generic providers.
 
     Never performs I/O in __init__. Errors are returned as AIResult with
     status="error" instead of raising, so callers can degrade gracefully.
     """
 
-    name = "9router"
+    name = "openai_compatible"
 
     def __init__(
         self,
@@ -31,9 +30,13 @@ class NineRouterProvider:
         timeout: int = DEFAULT_TIMEOUT_SECONDS,
         transport: httpx.AsyncBaseTransport | None = None,
     ) -> None:
+        if not base_url:
+            raise ValueError("base_url must be provided for OpenAICompatibleProvider")
+        if not model:
+            raise ValueError("model must be provided for OpenAICompatibleProvider")
         self.api_key = api_key
-        self.base_url = (base_url or DEFAULT_BASE_URL).rstrip("/")
-        self.model = model or DEFAULT_MODEL
+        self.base_url = base_url.rstrip("/")
+        self.model = model
         self.timeout = timeout
         self._transport = transport
         self._client: httpx.AsyncClient | None = None
@@ -94,7 +97,7 @@ class NineRouterProvider:
         self, analysis: AnalysisResult, prompt: str
     ) -> AIResult:
         if not self.api_key:
-            return self._error("AI_API_KEY is not configured for provider '9router'")
+            return self._error("AI_API_KEY is not configured for provider 'openai_compatible'")
 
         payload = {
             "model": self.model,
@@ -115,12 +118,12 @@ class NineRouterProvider:
         try:
             resp = await client.post("/chat/completions", json=payload)
         except httpx.HTTPError as exc:
-            logger.warning("9router request failed: %s", type(exc).__name__)
-            return self._error("Request to 9router failed", type(exc).__name__)
+            logger.warning("OpenAI compatible request failed: %s", type(exc).__name__)
+            return self._error("Request to provider failed", type(exc).__name__)
 
         if resp.status_code >= 400:
             return self._error(
-                f"9router returned HTTP {resp.status_code}", resp.text
+                f"Provider returned HTTP {resp.status_code}", resp.text
             )
 
         try:
@@ -128,22 +131,24 @@ class NineRouterProvider:
         except ValueError:
             preview = (resp.text or "")[:200]
             return self._error(
-                "9router returned a non-JSON response body",
+                "Provider returned a non-JSON response body",
                 f"preview: {preview}",
             )
 
         try:
             content = data["choices"][0]["message"]["content"]
         except (KeyError, IndexError, TypeError):
-            return self._error("9router response missing 'choices[0].message.content'")
+            return self._error("Provider response missing 'choices[0].message.content'")
 
         if not content or not content.strip():
-            return self._error("9router returned empty completion content")
+            return self._error("Provider returned empty completion content")
 
         try:
             explanation = self._parse_explanation(content)
         except (ValueError, TypeError) as exc:
-            return self._error("9router completion did not match AIExplanation schema", str(exc))
+            return self._error(
+                "Provider completion did not match AIExplanation schema", str(exc)
+            )
 
         usage = data.get("usage") or {}
         return AIResult(
