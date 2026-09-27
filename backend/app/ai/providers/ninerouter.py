@@ -40,7 +40,11 @@ class NineRouterProvider:
 
     def _get_client(self) -> httpx.AsyncClient:
         if self._client is None:
-            headers = {"Content-Type": "application/json"}
+            headers = {
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+                "User-Agent": "RepoLens/0.1",
+            }
             if self.api_key:
                 headers["Authorization"] = f"Bearer {self.api_key}"
             self._client = httpx.AsyncClient(
@@ -48,6 +52,7 @@ class NineRouterProvider:
                 headers=headers,
                 timeout=self.timeout,
                 transport=self._transport,
+                follow_redirects=True,
             )
         return self._client
 
@@ -121,7 +126,11 @@ class NineRouterProvider:
         try:
             data = resp.json()
         except ValueError:
-            return self._error("9router returned a non-JSON response body")
+            preview = (resp.text or "")[:200]
+            return self._error(
+                "9router returned a non-JSON response body",
+                f"preview: {preview}",
+            )
 
         try:
             content = data["choices"][0]["message"]["content"]
