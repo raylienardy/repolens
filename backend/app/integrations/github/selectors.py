@@ -21,4 +21,15 @@ def classify_file(path: str) -> str:
 def select_priority_files(entries: list[TreeEntry], max_count: int) -> list[TreeEntry]:
     blobs = [entry for entry in entries if entry.type == "blob"]
     priority = {"high": 0, "medium": 1, "low": 2}
-    return sorted(blobs, key=lambda entry: (priority[classify_file(entry.path)], entry.path.lower()))[:max_count]
+    # Determine rank for high priority based on PRIORITY_PATTERNS_HIGH order
+    def rank(entry_path: str) -> int:
+        name = PurePosixPath(entry_path).name.lower()
+        try:
+            return PRIORITY_PATTERNS_HIGH.index(name)
+        except ValueError:
+            return 9999
+    return sorted(blobs, key=lambda entry: (
+        priority[classify_file(entry.path)],
+        rank(entry.path) if priority[classify_file(entry.path)] == 0 else 0,
+        entry.path.lower()
+    ))[:max_count]

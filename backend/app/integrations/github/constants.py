@@ -22,6 +22,7 @@ PRIORITY_PATTERNS_MEDIUM = [
 ]
 
 ENTRY_POINT_PATTERNS = [
+    "manage.py",
     "main.py", "app.py", "index.ts", "index.js", "main.ts", "main.js",
 ]
 

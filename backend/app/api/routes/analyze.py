@@ -17,7 +17,7 @@ from app.services.orchestrator import orchestrate_analysis
 router = APIRouter()
 
 
-@router.post("/", response_model=AnalysisResponse)
+@router.post("", response_model=AnalysisResponse)
 async def analyze_repo(
     payload: AnalyzeRequest, session: AsyncSession = Depends(get_db)
 ) -> AnalysisResponse:
