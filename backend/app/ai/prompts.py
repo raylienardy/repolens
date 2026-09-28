@@ -95,11 +95,19 @@ def build_explanation_prompt(analysis: AnalysisResult) -> str:
 Jelaskan repository ini dalam bahasa Indonesia berdasarkan fakta di atas.
 
 # ATURAN
-1. JANGAN mengarang informasi yang tidak ada di fakta. Jika tidak ada, tulis "tidak terdeteksi".
-2. Jika kamu menyimpulkan sesuatu yang merupakan inferensi, tandai dengan kata "kemungkinan" atau "berdasarkan <fakta>".
-3. JANGAN memberi verdict keamanan. Hanya sebutkan file security signal yang ada.
-4. JANGAN memberi verdict kualitas absolut (mis. "kode ini bagus/buruk"). JANGAN memberi nilai/skoring.
-5. Semua angka harus berasal langsung dari fakta.
+ 1. JANGAN mengarang informasi yang tidak ada di fakta. Jika tidak ada, tulis "tidak terdeteksi".
+ 2. Jika kamu menyimpulkan sesuatu yang merupakan inferensi, tandai dengan kata "kemungkinan" atau "berdasarkan <fakta>".
+ 3. JANGAN memberi verdict keamanan. Hanya sebutkan file security signal yang ada.
+ 4. JANGAN memberi verdict kualitas absolut (mis. "kode ini bagus/buruk"). JANGAN memberi nilai/skoring.
+ 5. Semua angka harus berasal langsung dari fakta.
+
+# PANDUAN OUTPUT
+- Output HARUS berupa teks biasa. Tidak gunakan markdown: tidak **bold**, tidak *italic*, tidak `backticks`, tidak # heading, tidak bullet chars, tidak numbered list.
+- Gunakan prosa percakapan alami, tanpa nada formal atau kaku.
+- Hindari em‑dash; gunakan koma atau titik.
+- Buat kalimat pendek.
+- Jangan memulai kalimat dengan "Additionally," "Furthermore," "Moreover," atau "It is worth noting that".
+- Untuk elemen list (notable_findings, improvement_suggestions, key_technologies), setiap item harus berupa kalimat atau frasa pendek tanpa karakter bullet atau markdown.
 
 # OUTPUT
 Kembalikan JSON valid dengan struktur ini, tanpa teks tambahan:

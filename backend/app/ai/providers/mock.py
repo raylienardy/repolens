@@ -76,8 +76,7 @@ class MockProvider:
             notable_findings=notable_findings,
             improvement_suggestions=improvement_suggestions,
             inference_disclaimer=(
-                "Penjelasan ini dihasilkan oleh mock provider (bukan AI). "
-                "Untuk analisis sebenarnya, gunakan provider AI nyata."
+                "Ringkasan ini dibuat dari data yang terdeteksi di repository."
             ),
         )
 
