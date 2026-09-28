@@ -5,12 +5,19 @@ from app.analysis.schemas import DependenciesInfo, DetectedFramework, Frameworks
 def analyze_frameworks(input: AnalysisInput, deps: DependenciesInfo) -> FrameworksInfo:
     detected: list[DetectedFramework] = []
     
-    # Helper to find which file provided a dependency
+    # Helper to find which manifest file provided a dependency
     def find_evidence_dep(dep_name: str) -> str:
+        # Look for the dependency in manifest files only
         dep_lower = dep_name.lower()
-        for path, content in input.file_contents.items():
-            if dep_lower in content.lower():
-                return f"found in {PurePosixPath(path).name}"
+        # Check runtime and dev dependencies for known manifest files
+        # pyproject.toml / requirements.txt for runtime, package.json for dev
+        if dep_lower in (k.lower() for k in deps.runtime_dependencies.keys()):
+            # Prefer pyproject.toml if present, else requirements.txt
+            if "pyproject.toml" in (m.lower() for m in input.file_contents.keys()):
+                return "found in pyproject.toml"
+            return "found in requirements.txt"
+        if dep_lower in (k.lower() for k in deps.dev_dependencies.keys()):
+            return "found in package.json"
         return "found in dependencies"
 
     # Combine all dependencies for lookup

@@ -5,6 +5,8 @@ export default function DependenciesCard({ dependencies }: { dependencies: Depen
   const runtimeEntries = Object.entries(dependencies.runtime_dependencies)
     .slice(0, 10);
 
+  const cleanVersion = (v: string) => v.replace(/^[=<>~!]+/, "").trim();
+
   return (
     <section className="bg-white rounded-lg shadow p-4">
       <h3 className="text-xl font-semibold mb-2">Dependencies</h3>
@@ -30,7 +32,7 @@ export default function DependenciesCard({ dependencies }: { dependencies: Depen
           <p className="font-medium">Runtime dependencies:</p>
           <ul className="list-disc list-inside">
             {runtimeEntries.map(([k, v], i) => (
-              <li key={i}>{k} {v}</li>
+              <li key={i}>{k} {cleanVersion(v) || v}</li>
             ))}
           </ul>
           {Object.entries(dependencies.runtime_dependencies).length > 10 && (

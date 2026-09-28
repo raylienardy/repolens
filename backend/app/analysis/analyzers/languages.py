@@ -18,7 +18,8 @@ def analyze_languages(input: AnalysisInput) -> LanguagesInfo:
         if entry.get("type") == "blob":
             path = entry.get("path", "")
             ext = PurePosixPath(path).suffix.lower()
-            detected[ext] = detected.get(ext, 0) + 1
+            if ext:
+                detected[ext] = detected.get(ext, 0) + 1
             
     source = None
     if primary and detected: source = "both"
