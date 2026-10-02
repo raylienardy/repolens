@@ -12,6 +12,7 @@ from app.analysis.schemas import AnalysisResult
 from app.core.config import settings
 from app.db.repositories.repository_analysis import get_cached, save_analysis
 from app.integrations.github.client import GitHubClient
+from app.integrations.github.constants import MAX_FILES_TO_AI, MAX_TOTAL_CONTENT_BYTES
 from app.integrations.github.exceptions import GitHubError
 from app.integrations.github.selectors import select_priority_files
 from app.integrations.github.urls import parse_github_url
@@ -19,8 +20,8 @@ from app.schemas.orchestrator import AnalysisResponse
 
 logger = logging.getLogger(__name__)
 
-MAX_FETCH_FILES = 20
-MAX_TOTAL_SIZE_BYTES = 500 * 1024
+
+
 
 
 async def orchestrate_analysis(
@@ -43,13 +44,13 @@ async def orchestrate_analysis(
                 return _response_from_cache(repo_url, metadata.full_name, tree_resp.sha, cached)
 
         entries = tree_resp.entries
-        priority_files = select_priority_files(entries, max_count=MAX_FETCH_FILES)
+        priority_files = select_priority_files(entries, max_count=MAX_FILES_TO_AI)
 
         file_contents: dict[str, str] = {}
         total_size = 0
 
         for entry in priority_files:
-            if total_size >= MAX_TOTAL_SIZE_BYTES:
+            if total_size >= MAX_TOTAL_CONTENT_BYTES:
                 break
             try:
                 content_obj = await client.get_file_content(
@@ -58,7 +59,7 @@ async def orchestrate_analysis(
                 content_bytes = content_obj.content.encode("utf-8")
                 content_size = len(content_bytes)
 
-                if total_size + content_size > MAX_TOTAL_SIZE_BYTES:
+                if total_size + content_size > MAX_TOTAL_CONTENT_BYTES:
                     break
 
                 file_contents[entry.path] = content_obj.content
@@ -132,7 +133,7 @@ def _response_from_cache(
             status=cached.ai_status or "unavailable",
             provider="cache",
             error_message="Cached entry has no AI summary",
-            generated_at=datetime.now(timezone.utc),
+            generated_at=cached.created_at,
         )
     return AnalysisResponse(
         repo_url=repo_url,

@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import RepositoryAnalysis
@@ -58,6 +59,15 @@ async def save_analysis(
         expires_at=datetime.now(timezone.utc) + timedelta(days=ttl_days),
     )
     session.add(record)
-    await session.commit()
-    await session.refresh(record)
-    return record
+    try:
+        await session.commit()
+        await session.refresh(record)
+        return record
+    except IntegrityError:
+        # Race condition: another request inserted the same (repo, commit) first.
+        # Roll back and return the existing record instead of failing.
+        await session.rollback()
+        existing = await get_cached(session, repo_full_name, commit_sha)
+        if existing is None:
+            raise
+        return existing

@@ -1,0 +1,32 @@
+Rekomendasi urutan perbaikan
+Minggu 1 — bikin jalan dulu:
+
+Tambah lifespan + create_all di main.py (30 menit).
+
+Perbaiki README jadi portfolio-grade (2–3 jam).
+
+Hapus duplikasi konstanta di orchestrator.py (15 menit).
+
+Fix analyzed_at di _response_from_cache (10 menit).
+
+Tambah try/except IntegrityError di save_analysis (20 menit).
+
+Minggu 2 — naikkan kualitas:
+
+Retry + max_tokens + api_key opsional di openai_compatible.py.
+
+Ganti except Exception: continue jadi handler spesifik.
+
+Tambah section Limitations + Architecture di README.
+
+Tambah screenshot / demo GIF.
+
+Pin versi next dan react di package.json.
+
+Minggu 3 — portfolio polish:
+
+Setup CI GitHub Actions (pytest + lint) — meski test sederhana, keberadaan CI bernilai besar di mata reviewer.
+
+Tambah healthcheck + restart policy di docker-compose.yml.
+
+Dokumentasi design decision (kenapa deterministic analyzer, kenapa cache by commit SHA).
